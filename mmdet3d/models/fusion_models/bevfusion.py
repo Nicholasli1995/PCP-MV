@@ -94,7 +94,7 @@ class BEVFusion(Base3DFusionModel):
 
         # If the camera's vtransform is a BEVDepth version, then we're using depth loss. 
         self.use_depth_loss = ((encoders.get('camera', {}) or {}).get('vtransform', {}) or {}).get('type', '') in ['BEVDepth', 'AwareBEVDepth', 'DBEVDepth', 'AwareDBEVDepth']
-
+        self.upsample_factor = encoders.get('camera', {}).get('upsample_factor', None)
 
         self.init_weights()
 
@@ -313,6 +313,8 @@ class BEVFusion(Base3DFusionModel):
                     metas,
                     gt_depths=depths,
                 )
+                if self.upsample_factor is not None:
+                    feature = F.interpolate(feature, scale_factor=self.upsample_factor)
                 if self.use_depth_loss:
                     feature, auxiliary_losses['depth'] = feature[0], feature[-1]
             elif sensor == "lidar":

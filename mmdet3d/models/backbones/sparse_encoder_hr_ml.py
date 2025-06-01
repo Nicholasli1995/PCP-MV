@@ -3,7 +3,7 @@ from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
-from mmdet.module import BACKBONES
+from mmdet.models import BACKBONES
 
 class HighResolutionModule(nn.Module):
     def __init__(
@@ -80,7 +80,7 @@ class HighResolutionModule(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _make_branches(self, num_branches, block, num_blocks, num_channels):
+    def _make_branches(self, num_branches, num_blocks, num_channels):
         branches = []
 
         for i in range(num_branches):
@@ -103,8 +103,8 @@ class HighResolutionModule(nn.Module):
         )
         self.fuse_layer2 = make_sparse_convmodule(
             64,
-            128,
-            kernel_size=(1,1,8),
+            64,
+            kernel_size=(1,1,4),
             stride=(1,1,2),
             norm_cfg=self.norm_cfg,
             padding=0,
@@ -114,8 +114,8 @@ class HighResolutionModule(nn.Module):
         self.fuse_layer3 = make_sparse_convmodule(
             128,
             128,
-            kernel_size=(1,1,5),
-            stride=1,
+            kernel_size=(1,1,3),
+            stride=(1,1,2),
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_3",
@@ -124,8 +124,8 @@ class HighResolutionModule(nn.Module):
         self.fuse_layer4 = make_sparse_convmodule(
             128,
             128,
-            kernel_size=(1,1,5),
-            stride=1,
+            kernel_size=(1,1,3),
+            stride=(1,1,2),
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_4",
@@ -145,23 +145,23 @@ class HighResolutionModule(nn.Module):
     def forward(self, x):
         if self.num_branches == 1:
             return [self.branches[0](x[0])]
-
+        else:
+            x = [self.branches[i](x[i]) for i in range(len(x))]
         f1 = self.fuse_layer1(x[0]).dense()
-        f2 = self.fuse_layer1(x[1]).dense()
-        f3 = self.fuse_layer1(x[2]).dense()
-        f3 = nn.functional.upsample(f3, scale_factor=2)
-        f4 = self.fuse_layer1(x[3]).dense()
-        f4 = nn.functional.upsample(f4, scale_factor=2)
-
+        f2 = self.fuse_layer2(x[1]).dense()
+        f3 = self.fuse_layer3(x[2]).dense()
+        f4 = self.fuse_layer4(x[3]).dense()
+        
         f1 = self.transform_feats(f1)
         f2 = self.transform_feats(f2)
         f3 = self.transform_feats(f3)
         f4 = self.transform_feats(f4)
-
+        f3 = nn.functional.upsample(f3, scale_factor=2)
+        f4 = nn.functional.upsample(f4, scale_factor=2)
         return f1 + f2 + f3 + f4
     
 @BACKBONES.register_module()
-class HRSparseEncoderV2(nn.module):
+class HRSparseEncoderV2(nn.Module):
     def __init__(
             self, 
             in_channels, 
@@ -197,7 +197,7 @@ class HRSparseEncoderV2(nn.module):
                 norm_cfg=norm_cfg, 
                 padding=1, 
                 indice_key="subm1", 
-                conv_type="SubMconv3d", 
+                conv_type="SubMConv3d", 
                 order=("conv",)
                 )
         else:
@@ -208,7 +208,7 @@ class HRSparseEncoderV2(nn.module):
                 norm_cfg=norm_cfg, 
                 padding=1, 
                 indice_key="subm1", 
-                conv_type="SubMconv3d", 
+                conv_type="SubMConv3d", 
                 )            
         encoder_out_channels = self.make_encoder_layers(
             make_sparse_convmodule, 
@@ -219,7 +219,7 @@ class HRSparseEncoderV2(nn.module):
         self.high_resolution_module = HighResolutionModule(norm_cfg=norm_cfg)
     
     @auto_fp16(apply_to=("voxel_features",))
-    def forward(self, voxel_features, coors, batch_size, **kwargs):
+    def forward_(self, voxel_features, coors, batch_size, **kwargs):
         coors = coors.int()
         input_sp_tensor = spconv.SparseConvTensor(
             voxel_features, coors, self.sparse_shape, batch_size

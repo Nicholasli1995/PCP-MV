@@ -3,10 +3,10 @@ from torch import nn as nn
 
 from mmdet3d.ops import SparseBasicBlock, make_sparse_convmodule
 from mmdet3d.ops import spconv as spconv
-from mmdet.module import BACKBONES
+from mmdet.models import BACKBONES
 
 @BACKBONES.register_module()
-class HRSparseEncoder(nn.module):
+class HRSparseEncoder(nn.Module):
     def __init__(
             self, 
             in_channels, 
@@ -41,7 +41,7 @@ class HRSparseEncoder(nn.module):
                 norm_cfg=norm_cfg, 
                 padding=1, 
                 indice_key="subm1", 
-                conv_type="SubMconv3d", 
+                conv_type="SubMConv3d", 
                 order=("conv",)
                 )
         else:
@@ -52,7 +52,7 @@ class HRSparseEncoder(nn.module):
                 norm_cfg=norm_cfg, 
                 padding=1, 
                 indice_key="subm1", 
-                conv_type="SubMconv3d", 
+                conv_type="SubMConv3d", 
                 )            
         encoder_out_channels = self.make_encoder_layers(
             make_sparse_convmodule, 
