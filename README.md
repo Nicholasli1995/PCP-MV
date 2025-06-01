@@ -5,13 +5,13 @@ This repository is to be released in June 2025.
 Official project website for the ICRA 2025 paper "[Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection](https://arxiv.org/abs/2505.16029)". 
 
 ## Environment
-Before you start, please refer to [ENV.md](https://github.com/Nicholasli1995/PCP-MV/blob/main/docs/ENV.md) to build this project.
+Before you start, please refer to [ENV.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/ENV.md) to build this project.
 
 ## Data preparation
-Please follow [DATASET.md](https://github.com/Nicholasli1995/PCP-MV/blob/main/docs/DATASET.md) to download and prepare the nuScenes dataset.
+Please follow [DATASET.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/DATASET.md) to download and prepare the nuScenes dataset.
 
 ## Usage: inference demo
-Refer to [INFERENCE.md](https://github.com/Nicholasli1995/PCP-MV/blob/main/docs/INFERENCE.md) to perform LiDAR-camera tracking-by-detection and quantitative evaluation.
+Refer to [INFERENCE.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/INFERENCE.md) to perform LiDAR-camera tracking-by-detection and quantitative evaluation.
 
 ## Usage: training experiments
 Refer to TRAIN.md to perform training with various configurations.
