@@ -53,4 +53,4 @@ PCP-MV
 
 ```
 
-If you do not want to run the previous command, you can download prepared .pkl files here (To be updated).
+If you do not want to run the previous command, you can download the prepared .pkl files here (To be updated).

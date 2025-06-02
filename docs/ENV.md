@@ -1,5 +1,5 @@
 ## Dependency
-You are suggested to create an environment that meets the following dependencies. Other versions of libaries may also work but are **not tested**.
+You are suggested to create an environment that meets the following dependencies. Other versions of libraries may also work but **have not been tested**.
 
 - Python >= 3.7.11
 - [PyTorch](https://github.com/pytorch/pytorch) >= 1.9
