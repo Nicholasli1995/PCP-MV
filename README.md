@@ -14,7 +14,7 @@ Please follow [DATASET.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/
 Refer to [INFERENCE.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/INFERENCE.md) to perform LiDAR-camera tracking-by-detection and quantitative evaluation.
 
 ## Usage: training experiments
-Refer to TRAIN.md to perform training with various configurations.
+Refer to [TRAIN.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/TRAIN.md) to perform training with various configurations.
 
 ## License
 A MIT license is used for this repository. Third-party datasets like nuScenes are subject to their own licenses and the user should obey them strictly.
