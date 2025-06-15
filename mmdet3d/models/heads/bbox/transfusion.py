@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import torch
 import torch.nn.functional as F
+import mmdet3d.models.heads.bbox.crowd_ped_loss_utils as cpl
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.runner import force_fp32
 from torch import nn
@@ -67,6 +68,10 @@ class TransFusionHead(nn.Module):
         train_cfg=None,
         test_cfg=None,
         bbox_coder=None,
+        use_density_weights=False,
+        use_relationship_targets=False,
+        cpl_dist_thresh=3.,
+        pedestrian_class_index=8
     ):
         super(TransFusionHead, self).__init__()
 
@@ -81,8 +86,11 @@ class TransFusionHead(nn.Module):
         self.bn_momentum = bn_momentum
         self.nms_kernel_size = nms_kernel_size
         self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
-
+        self.test_cfg = test_cfg        
+        self.use_density_weights = use_density_weights
+        self.use_relationship_targets = use_relationship_targets
+        self.cpl_dist_thresh = cpl_dist_thresh
+        self.pedestrian_class_index = pedestrian_class_index
         self.use_sigmoid_cls = loss_cls.get("use_sigmoid", False)
         if not self.use_sigmoid_cls:
             self.num_classes += 1
@@ -180,6 +188,14 @@ class TransFusionHead(nn.Module):
         batch_y = batch_y + 0.5
         coord_base = torch.cat([batch_x[None], batch_y[None]], dim=0)[None]
         coord_base = coord_base.view(1, 2, -1).permute(0, 2, 1)
+        # coordinates in the ego coordinate system
+        dx, dy = self.train_cfg["voxel_size"][:2]
+        x_start, y_start = self.train_cfg["point_cloud_range"][:2]
+        coord_x, coord_y = torch.meshgrid(
+            torch.linspace(x_start, x_start + (x_size - 1) * dx * self.train_cfg["out_size_factor"], x_size),
+            torch.linspace(y_start, y_start + (y_size - 1) * dy * self.train_cfg["out_size_factor"], y_size)
+        )
+        self.heatmap_coords = torch.stack([coord_x, coord_y]).permute(1, 2, 0)        
         return coord_base
 
     def init_weights(self):
@@ -394,6 +410,7 @@ class TransFusionHead(nn.Module):
         num_pos = np.sum(res_tuple[5])
         matched_ious = np.mean(res_tuple[6])
         heatmap = torch.cat(res_tuple[7], dim=0)
+        heatmap_weights = torch.cat(res_tuple[8], dim=0)
         return (
             labels,
             label_weights,
@@ -403,6 +420,7 @@ class TransFusionHead(nn.Module):
             num_pos,
             matched_ious,
             heatmap,
+            heatmap_weights
         )
 
     def get_targets_single(self, gt_bboxes_3d, gt_labels_3d, preds_dict, batch_idx):
@@ -509,7 +527,7 @@ class TransFusionHead(nn.Module):
             pos_bbox_targets = self.bbox_coder.encode(sampling_result.pos_gt_bboxes)
 
             bbox_targets[pos_inds, :] = pos_bbox_targets
-            bbox_weights[pos_inds, :] = 1.0
+            bbox_weights[pos_inds, :10] = 1.0
 
             if gt_labels_3d is None:
                 labels[pos_inds] = 1
@@ -519,6 +537,16 @@ class TransFusionHead(nn.Module):
                 label_weights[pos_inds] = 1.0
             else:
                 label_weights[pos_inds] = self.train_cfg.pos_weight
+        
+        flag_ped = labels[pos_inds] == self.pedestrian_class_index
+        if self.use_relationship_targets and flag_ped.sum() > 1:
+            pos_ped_inds = pos_inds[flag_ped].tolist()
+            gt_ped_locs = sampling_result.pos_gt_bboxes[flag_ped, :3]            
+            re_targets = cpl.get_relationship_targets(gt_ped_locs)
+            for re_target_idx, pos_ped_ind in enumerate(pos_ped_inds):
+                if re_targets[re_target_idx] is not None:                    
+                    bbox_weights[pos_ped_ind, 10:] = 1.
+                    bbox_targets[pos_ped_ind, 10:] = re_targets[re_target_idx][:2]
 
         if len(neg_inds) > 0:
             label_weights[neg_inds] = 1.0
@@ -537,6 +565,11 @@ class TransFusionHead(nn.Module):
         heatmap = gt_bboxes_3d.new_zeros(
             self.num_classes, feature_map_size[1], feature_map_size[0]
         )
+        # density-aware weights
+        heatmap_weights = heatmap.new_ones(*heatmap.shape)
+        ped_locs = gt_bboxes_3d[gt_labels_3d == self.pedestrian_class_index, :3]
+        heatmap_weights[self.pedestrian_class_index,:,:] = cpl.get_density_weights(self.heatmap_coords.clone(), ped_locs, self.cpl_dist_thresh)
+
         for idx in range(len(gt_bboxes_3d)):
             width = gt_bboxes_3d[idx][3]
             length = gt_bboxes_3d[idx][4]
@@ -582,6 +615,7 @@ class TransFusionHead(nn.Module):
             int(pos_inds.shape[0]),
             float(mean_iou),
             heatmap[None],
+            heatmap_weights[None]
         )
 
     @force_fp32(apply_to=("preds_dicts"))
@@ -604,6 +638,7 @@ class TransFusionHead(nn.Module):
             num_pos,
             matched_ious,
             heatmap,
+            heatmap_weights,
         ) = self.get_targets(gt_bboxes_3d, gt_labels_3d, preds_dicts[0])
         if hasattr(self, "on_the_image_mask"):
             label_weights = label_weights * self.on_the_image_mask
@@ -617,7 +652,19 @@ class TransFusionHead(nn.Module):
             clip_sigmoid(preds_dict["dense_heatmap"]),
             heatmap,
             avg_factor=max(heatmap.eq(1).float().sum().item(), 1),
+            reduction_override="none"
         )
+
+        eps = torch.finfo(torch.float32).eps
+        avg_factor=max(heatmap.eq(1).float().sum().item(), 1)
+
+        if self.use_density_weights:
+            # print('Max number of local neighbors', heatmap_weights.max())
+            loss_heatmap = loss_heatmap * heatmap_weights
+            loss_heatmap = loss_heatmap.sum() / (max(avg_factor, 1) + eps)
+        else:
+            loss_heatmap = loss_heatmap.sum() / (max(avg_factor, 1) + eps)
+
         loss_dict["loss_heatmap"] = loss_heatmap
 
         # compute loss for each layer
@@ -665,23 +712,28 @@ class TransFusionHead(nn.Module):
                 ...,
                 idx_layer * self.num_proposals : (idx_layer + 1) * self.num_proposals,
             ]
+            # preds = torch.cat(
+            #     [layer_center, layer_height, layer_dim, layer_rot], dim=1
+            # ).permute(
+            #     0, 2, 1
+            # )  # [BS, num_proposals, code_size]
+            layer_vel = preds_dict["vel"][
+                ...,
+                idx_layer
+                * self.num_proposals : (idx_layer + 1)
+                * self.num_proposals,
+            ]
+            layer_relationship = preds_dict["relationship"][
+                ...,
+                idx_layer
+                * self.num_proposals : (idx_layer + 1)
+                * self.num_proposals,
+            ]
             preds = torch.cat(
-                [layer_center, layer_height, layer_dim, layer_rot], dim=1
+                [layer_center, layer_height, layer_dim, layer_rot, layer_vel, layer_relationship], dim=1
             ).permute(
                 0, 2, 1
-            )  # [BS, num_proposals, code_size]
-            if "vel" in preds_dict.keys():
-                layer_vel = preds_dict["vel"][
-                    ...,
-                    idx_layer
-                    * self.num_proposals : (idx_layer + 1)
-                    * self.num_proposals,
-                ]
-                preds = torch.cat(
-                    [layer_center, layer_height, layer_dim, layer_rot, layer_vel], dim=1
-                ).permute(
-                    0, 2, 1
-                )  # [BS, num_proposals, code_size]
+            )  # [BS, num_proposals, code_size]                
             code_weights = self.train_cfg.get("code_weights", None)
             layer_bbox_weights = bbox_weights[
                 :,

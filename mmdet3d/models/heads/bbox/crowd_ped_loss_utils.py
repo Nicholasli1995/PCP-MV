@@ -31,6 +31,7 @@ def get_relationship_targets(
     targets = []
     for i in range(len(dm)):
         if dm[i].min() < dist_thresh:
+            print('Add relationship target for input box {}'.format(i))
             j = int(torch.argmin(dm[i]))
             targets.append(bboxes[j] - bboxes[i])
         else:

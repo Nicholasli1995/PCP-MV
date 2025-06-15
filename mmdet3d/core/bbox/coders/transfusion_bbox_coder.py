@@ -32,7 +32,7 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
         targets[:, 2] = dst_boxes[:, 2] + dst_boxes[:, 5] * 0.5  # bottom center to gravity center
         targets[:, 6] = torch.sin(dst_boxes[:, 6])
         targets[:, 7] = torch.cos(dst_boxes[:, 6])
-        if self.code_size == 10:
+        if self.code_size in [10, 12]:
             targets[:, 8:10] = dst_boxes[:, 7:]
         return targets
 
