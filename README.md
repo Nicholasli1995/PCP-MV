@@ -4,6 +4,8 @@ This repository is to be released in June 2025.
 
 Official project website for the ICRA 2025 paper "[Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection](https://arxiv.org/abs/2505.16029)". 
 
+[[Poster](https://drive.google.com/file/d/1Q3g4COChyJZ3smdSxP5NKc5Mt1PWNPk_/view?usp=sharing)]
+
 ## Environment
 Before you start, please refer to [ENV.md](https://github.com/Nicholasli1995/PCP-MV/blob/master/docs/ENV.md) to build this project.
 
