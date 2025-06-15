@@ -1,0 +1,22 @@
+model:
+  fuser:
+    type: ConvFuser
+    in_channels: [80, 256]
+    out_channels: 256
+
+  encoders:
+    camera:
+      upsample_factor: 2
+    lidar:
+      backbone:
+        type: HRSparseEncoderV2
+
+  heads:
+    object:
+      train_cfg:
+        out_size_factor: 4
+      test_cfg:
+        out_size_factor: 4
+      bbox_coder:
+        type: TransFusionBBoxCoder
+        out_size_factor: 4
