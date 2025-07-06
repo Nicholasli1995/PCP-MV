@@ -1,5 +1,3 @@
-This repository is to be released in June 2025.
-
 # PCP-MV
 
 Official project website for the ICRA 2025 paper "[Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection](https://arxiv.org/abs/2505.16029)". 

@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from torch.nn.functional import grid_sample
 
+from mmcv.runner import force_fp32
 from mmdet3d.models.builder import VTRANSFORMS
 
 def get_voxel_coord(bound1, bound2, voxel_size):

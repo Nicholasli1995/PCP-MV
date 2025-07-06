@@ -4,3 +4,6 @@ model:
     in_channels: [80, 256]
     out_channels: 256
 
+  encoders:
+    camera:
+      upsample_factor: 2

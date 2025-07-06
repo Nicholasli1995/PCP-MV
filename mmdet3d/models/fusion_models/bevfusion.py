@@ -42,6 +42,7 @@ class BEVFusion(Base3DFusionModel):
                     "vtransform": build_vtransform(encoders["camera"]["vtransform"]),
                 }
             )
+            self.vtransform_type = encoders["camera"]["vtransform"]["type"]
         if encoders.get("lidar") is not None:
             if encoders["lidar"]["voxelize"].get("max_num_points", -1) > 0:
                 voxelize_module = Voxelization(**encoders["lidar"]["voxelize"])
@@ -130,22 +131,28 @@ class BEVFusion(Base3DFusionModel):
         BN, C, H, W = x.size()
         x = x.view(B, int(BN / B), C, H, W)
 
-        x = self.encoders["camera"]["vtransform"](
-            x,
-            points,
-            radar_points,
-            camera2ego,
-            lidar2ego,
-            lidar2camera,
-            lidar2image,
-            camera_intrinsics,
-            camera2lidar,
-            img_aug_matrix,
-            lidar_aug_matrix,
-            img_metas,
-            depth_loss=self.use_depth_loss, 
-            gt_depths=gt_depths,
-        )
+        if self.vtransform_type in ['BackwardTransform']:
+            x = self.encoders["camera"]["vtransform"](
+                x,
+                lidar2image
+            )
+        else:
+            x = self.encoders["camera"]["vtransform"](
+                x,
+                points,
+                radar_points,
+                camera2ego,
+                lidar2ego,
+                lidar2camera,
+                lidar2image,
+                camera_intrinsics,
+                camera2lidar,
+                img_aug_matrix,
+                lidar_aug_matrix,
+                img_metas,
+                depth_loss=self.use_depth_loss, 
+                gt_depths=gt_depths,
+            )            
         return x
     
     def extract_features(self, x, sensor) -> torch.Tensor:

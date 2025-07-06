@@ -21,8 +21,8 @@ model:
         in_channels: 256
         out_channels: 80
         image_size: ${image_size}
-        xbound: [-96.0, 96.0, 0.6]
-        ybound: [-48.0, 48.0, 0.6]
+        xbound: [-48.0, 48.0, 0.6]
+        ybound: [-96.0, 96.0, 0.6]        
         zbound: [-5.1, 3.0, 0.6]
     lidar:
       voxelize:
@@ -33,7 +33,27 @@ model:
       backbone:
         type: HRSparseEncoderV2
         in_channels: 5
-        sparse_shape: [2560, 1280, 41]
+        sparse_shape: [1280, 2560, 41]
+        fuse_layer_in_channel:
+          - 32
+          - 64
+          - 128
+          - 128                 
+        fuse_layer_out_channel:
+          - 32
+          - 128
+          - 256
+          - 256             
+        fuse_layer_kernel_size:
+          - [1, 1, 6]
+          - [1, 1, 8]
+          - [1, 1, 5]
+          - [1, 1, 5]
+        fuse_layer_stride:
+          - 2
+          - [1, 1, 2]
+          - 1
+          - 1        
         output_channels: 128
         order:
           - conv

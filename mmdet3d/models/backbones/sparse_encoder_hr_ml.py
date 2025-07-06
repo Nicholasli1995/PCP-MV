@@ -13,10 +13,18 @@ class HighResolutionModule(nn.Module):
         num_blocks=[1,1,2,4],
         num_inchannels=[32,64,128,128],
         num_channels=[32,64,128,128],
+        fuse_layer_in_channel = [32, 64, 128, 128],
+        fuse_layer_out_channel = [32, 64, 128, 128],        
+        fuse_layer_kernel_size = [(1,1,6), (1,1,4), (1,1,3), (1,1,3)],
+        fuse_layer_stride = [2, (1,1,2), (1,1,2), (1,1,2)],        
         multi_scale_output=True
         ):
         super(HighResolutionModule, self).__init__()
         self.norm_cfg = norm_cfg
+        self.fuse_layer_in_channel = fuse_layer_in_channel
+        self.fuse_layer_out_channel = fuse_layer_out_channel
+        self.fuse_layer_kernel_size = fuse_layer_kernel_size
+        self.fuse_layer_stride = fuse_layer_stride
         self._check_branches(
             num_branches, num_blocks, num_inchannels, num_channels)
 
@@ -92,40 +100,40 @@ class HighResolutionModule(nn.Module):
 
     def _make_fuse_layers(self):
         self.fuse_layer1 = make_sparse_convmodule(
-            32,
-            32,
-            kernel_size=(1,1,6),
-            stride=2,
+            self.fuse_layer_in_channel[0],
+            self.fuse_layer_out_channel[0],
+            kernel_size=self.fuse_layer_kernel_size[0],
+            stride=self.fuse_layer_stride[0],
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_1",
             conv_type="SparseConv3d"            
         )
         self.fuse_layer2 = make_sparse_convmodule(
-            64,
-            64,
-            kernel_size=(1,1,4),
-            stride=(1,1,2),
+            self.fuse_layer_in_channel[1],
+            self.fuse_layer_out_channel[1],
+            kernel_size=self.fuse_layer_kernel_size[1],
+            stride=self.fuse_layer_stride[1],
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_2",
             conv_type="SparseConv3d"            
         )   
         self.fuse_layer3 = make_sparse_convmodule(
-            128,
-            128,
-            kernel_size=(1,1,3),
-            stride=(1,1,2),
+            self.fuse_layer_in_channel[2],
+            self.fuse_layer_out_channel[2],
+            kernel_size=self.fuse_layer_kernel_size[2],
+            stride=self.fuse_layer_stride[2],
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_3",
             conv_type="SparseConv3d"            
         )
         self.fuse_layer4 = make_sparse_convmodule(
-            128,
-            128,
-            kernel_size=(1,1,3),
-            stride=(1,1,2),
+            self.fuse_layer_in_channel[3],
+            self.fuse_layer_out_channel[3],
+            kernel_size=self.fuse_layer_kernel_size[3],
+            stride=self.fuse_layer_stride[3],
             norm_cfg=self.norm_cfg,
             padding=0,
             indice_key="hr_fuse_4",
@@ -172,6 +180,10 @@ class HRSparseEncoderV2(nn.Module):
             output_channels=128,
             encoder_channels=((16,), (32,32,32), (64,64,64), (64,64,64)),
             encoder_paddings=((1,), (1,1,1), (1,1,1), ((0,1,1), 1,1)),
+            fuse_layer_in_channel = [32, 64, 128, 128],
+            fuse_layer_out_channel = [32, 64, 128, 128],              
+            fuse_layer_kernel_size = [(1,1,6), (1,1,4), (1,1,3), (1,1,3)],
+            fuse_layer_stride = [2, (1,1,2), (1,1,2), (1,1,2)],                
             block_type="conv_module"
             ):
         super().__init__()
@@ -216,7 +228,13 @@ class HRSparseEncoderV2(nn.Module):
             self.base_channels, 
             block_type=block_type
             )
-        self.high_resolution_module = HighResolutionModule(norm_cfg=norm_cfg)
+        self.high_resolution_module = HighResolutionModule(
+            fuse_layer_in_channel=fuse_layer_in_channel,
+            fuse_layer_out_channel=fuse_layer_out_channel,
+            fuse_layer_kernel_size=fuse_layer_kernel_size,
+            fuse_layer_stride=fuse_layer_stride,
+            norm_cfg=norm_cfg
+            )
     
     @auto_fp16(apply_to=("voxel_features",))
     def forward_(self, voxel_features, coors, batch_size, **kwargs):
