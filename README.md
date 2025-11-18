@@ -25,12 +25,16 @@ This repository is developed based on [BEVFusion](https://github.com/mit-han-lab
 ## Citation
 Please star this repository and cite the following paper in your publications if it helps your research:
 
-    @inproceedings{li2025learning,
-      title={Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection},
+    @INPROCEEDINGS{11128508,
       author={Li, Shichao and Li, Peiliang and Lian, Qing and Yun, Peng and Chen, Xiaozhi},
-      booktitle={2023 IEEE international conference on robotics and automation (ICRA)},
+      booktitle={2025 IEEE International Conference on Robotics and Automation (ICRA)}, 
+      title={Learning Better Representations for Crowded Pedestrians in Offboard LiDAR-Camera 3D Tracking-by-detection}, 
       year={2025},
-      organization={IEEE}
-    }
+      volume={},
+      number={},
+      pages={2740-2747},
+      keywords={Point cloud compression;Training;Pedestrians;Three-dimensional displays;Urban areas;Benchmark testing;Semisupervised learning;Trajectory;Robotics and automation;System analysis and design},
+      doi={10.1109/ICRA55743.2025.11128508}
+      }
 
 [Link to the paper](https://arxiv.org/abs/2505.16029)
