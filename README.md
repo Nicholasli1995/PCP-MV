@@ -1,6 +1,9 @@
 # PCP-MV
 
-Official project website for the ICRA 2025 paper "[Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection](https://arxiv.org/abs/2505.16029)". 
+Official project website for the ICRA 2025 paper "[Learning better representations for crowded pedestrians in offboard LiDAR-camera 3D tracking-by-detection](https://arxiv.org/abs/2505.16029)", which studies the representation learning problem for 3D multiple object tracking using point clouds and images as inputs, especially for environments with crowded pedestrians. 
+<p align="center">
+  <img src="https://github.com/Nicholasli1995/PCP-MV/blob/master/imgs/Poster_method.jpg" height="400"/>
+</p>
 
 [[Poster](https://drive.google.com/file/d/1Q3g4COChyJZ3smdSxP5NKc5Mt1PWNPk_/view?usp=sharing)]
 
