@@ -32,7 +32,7 @@ You should see the results at $PCP_MV_DIR/tools/nusc_tracking/res/. This demo sh
 |[Probabilistic 3D MOT](https://github.com/eddyhkchiu/mahalanobis_3d_multi_object_tracking)|ICRA 2021|68.7| 76.6|
 |[VoxelNeXt](https://github.com/dvlab-research/VoxelNeXt)|CVPR 2023|70.2 |N/A  |
 |[JTD3D](https://github.com/TRAILab/jdt3d-website)|ECCV 2024|62.1 |N/A  |
-|This demo (BEVFusion Baseline, NDS 71.35)            |ICRA 2023 |72.6|77.7|
-|This demo (Baseline + the proposed representation learning approach, NDS 71.38)          |ICRA 2025 |73.0|79.5|
+|This demo (BEVFusion Baseline, NDS 71.35)![](https://github.com/Nicholasli1995/PCP-MV/blob/master/imgs/Baseline_Det_Eval.jpg)            |ICRA 2023 |72.6|77.7![](https://github.com/Nicholasli1995/PCP-MV/blob/master/imgs/Baseline_Tracking_Eval.jpg)|
+|This demo (Baseline + the proposed representation learning approach, NDS 71.38)![](https://github.com/Nicholasli1995/PCP-MV/blob/master/imgs/Baseline%2BDW%2BRE_Det_Eval.jpg)          |ICRA 2025 |73.0|79.5![](https://github.com/Nicholasli1995/PCP-MV/blob/master/imgs/Baseline%2BDW%2BRE_Tracking_Eval.jpg)|
 
 Notably, without incurring any extra inference cost, the proposed representation learning approach improves the performance for 3D object detection and tracking. 
