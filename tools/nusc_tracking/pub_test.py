@@ -23,7 +23,7 @@ def parse_args():
         default='/media/nicholas/My Passport/projects/CenterPoint/infos_val_10sweeps_withvelo_filter_True.json'
     )
     parser.add_argument("--hungarian", action='store_true')
-    parser.add_argument("--root", type=str, default="/media/nicholas/My Passport/projects/bevfusion/data/nuscenes")
+    parser.add_argument("--root", type=str, default="../../data/nuscenes")
     parser.add_argument("--version", type=str, default='v1.0-trainval')
     parser.add_argument("--max_age", type=int, default=3)
 

@@ -8,6 +8,9 @@ You are suggested to create an environment that meets the following dependencies
 - [mmcv-full](https://github.com/open-mmlab/mmcv) = 1.5.2
 - [mmdetection](http://github.com/open-mmlab/mmdetection) = 2.24.0
 - [nuscenes-dev-kit](https://github.com/nutonomy/nuscenes-devkit)
+- [numba](https://pypi.org/project/numba/) = 0.56.4
+- [pandas](https://pypi.org/project/pandas/) = 1.3.5
+- [motmetrics](https://pypi.org/project/motmetrics/) = 1.1.3
 
 ## Compile and install
 Compile and install the extension modules at your project directory ${PCP_MV_DIR} with:
